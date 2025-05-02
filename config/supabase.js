@@ -64,34 +64,4 @@ export async function submitFormToSupabase(formData) {
     console.error('Error submitting form:', error)
     return { success: false, error: error.message }
   }
-}
-
-// Function to handle file uploads
-export async function uploadFile(file) {
-  try {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`
-    const filePath = `${fileName}`
-
-    const { data, error } = await supabase.storage
-      .from('contact-attachments')
-      .upload(filePath, file)
-
-    if (error) throw error
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('contact-attachments')
-      .getPublicUrl(filePath)
-
-    return {
-      success: true,
-      url: publicUrl,
-      name: file.name,
-      type: file.type,
-      size: file.size
-    }
-  } catch (error) {
-    console.error('Error uploading file:', error)
-    return { success: false, error: error.message }
-  }
 } 

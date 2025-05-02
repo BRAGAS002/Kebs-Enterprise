@@ -5,30 +5,43 @@ export async function handleFormSubmission(formData) {
     // Upload files first if any
     const files = formData.getAll('attachments');
     const fileUrls = [];
+    const uploadErrors = [];
 
     for (const file of files) {
       if (file.size > 0) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { data, error } = await supabase.storage
-          .from('contact-attachments')
-          .upload(filePath, file);
-
-        if (error) throw error;
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('contact-attachments')
-          .getPublicUrl(filePath);
+        try {
+          const result = await uploadFile(file);
           
-        fileUrls.push({
-          name: file.name,
-          url: publicUrl,
-          type: file.type,
-          size: file.size
-        });
+          if (result.success) {
+            fileUrls.push({
+              name: file.name,
+              url: result.url,
+              type: file.type,
+              size: file.size
+            });
+          } else {
+            uploadErrors.push({
+              fileName: file.name,
+              error: result.error
+            });
+          }
+        } catch (error) {
+          uploadErrors.push({
+            fileName: file.name,
+            error: error.message
+          });
+        }
       }
+    }
+
+    // If there were any file upload errors, return them
+    if (uploadErrors.length > 0) {
+      return {
+        success: false,
+        error: 'File upload errors occurred',
+        uploadErrors,
+        message: 'Some files could not be uploaded. Please check the file types and sizes.'
+      };
     }
 
     // Insert form submission into database

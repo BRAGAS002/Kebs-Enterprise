@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize components based on current page
   if (document.querySelector('.testimonial-card')) {
-    initTestimonialSlider();
+    // Remove testimonial slider functionality and related code
   }
   
   // Initialize gallery filters if on gallery page
@@ -20,8 +20,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   initMobileMenu();
-  
-  initFileUpload();
+
+  // Initialize animations
+  import('./animations.js').then(({ initAnimations }) => {
+    initAnimations();
+  });
 });
 
 // Header scroll behavior
@@ -87,86 +90,6 @@ function initMobileMenu() {
       menuToggle.setAttribute('aria-expanded', 'false');
     });
   });
-}
-
-// Testimonial slider functionality
-function initTestimonialSlider() {
-  const testimonials = document.querySelectorAll('.testimonial-card');
-  const dots = document.querySelectorAll('.dot');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  let currentIndex = 0;
-  
-  // Set initial active testimonial
-  setActiveTestimonial(currentIndex);
-  
-  // Set up click event on dots
-  dots.forEach((dot, index) => {
-    dot.addEventListener('click', () => {
-      setActiveTestimonial(index);
-    });
-  });
-  
-  // Set up prev/next buttons
-  if (prevBtn) {
-    prevBtn.addEventListener('click', () => {
-      const prevIndex = (currentIndex - 1 + testimonials.length) % testimonials.length;
-      setActiveTestimonial(prevIndex);
-    });
-  }
-  
-  if (nextBtn) {
-    nextBtn.addEventListener('click', () => {
-      const nextIndex = (currentIndex + 1) % testimonials.length;
-      setActiveTestimonial(nextIndex);
-    });
-  }
-  
-  // Auto slide function
-  function autoSlide() {
-    const nextIndex = (currentIndex + 1) % testimonials.length;
-    setActiveTestimonial(nextIndex);
-  }
-  
-  // Set active testimonial
-  function setActiveTestimonial(index) {
-    // Remove all active classes
-    testimonials.forEach((testimonial, i) => {
-      testimonial.classList.remove('active', 'previous', 'next');
-      
-      if (i < index) {
-        testimonial.classList.add('previous');
-      } else if (i > index) {
-        testimonial.classList.add('next');
-      }
-    });
-    
-    dots.forEach(dot => {
-      dot.classList.remove('active');
-    });
-    
-    // Add active class to current testimonial and dot
-    testimonials[index].classList.add('active');
-    dots[index].classList.add('active');
-    
-    // Update current index
-    currentIndex = index;
-  }
-  
-  // Set auto slide interval
-  const slideInterval = setInterval(autoSlide, 5000);
-  
-  // Pause auto slide on hover
-  const testimonialSlider = document.querySelector('.testimonial-slider');
-  if (testimonialSlider) {
-    testimonialSlider.addEventListener('mouseenter', () => {
-      clearInterval(slideInterval);
-    });
-    
-    testimonialSlider.addEventListener('mouseleave', () => {
-      setInterval(autoSlide, 5000);
-    });
-  }
 }
 
 // Gallery filter functionality
@@ -235,7 +158,7 @@ async function initContactForm() {
   
   if (contactForm) {
     // Load saved form data if it exists
-    const { loadFormData, saveFormData, submitFormToSupabase, uploadFile } = await import('../../config/supabase.js');
+    const { loadFormData, saveFormData, submitFormToSupabase } = await import('../../config/supabase.js');
     const savedData = loadFormData();
     
     if (savedData) {
@@ -269,30 +192,12 @@ async function initContactForm() {
       try {
         const formData = new FormData(this);
         
-        // Handle file uploads first
-        const fileInput = document.getElementById('attachments');
-        const files = fileInput.files;
-        const fileUrls = [];
-        
-        for (const file of files) {
-          const result = await uploadFile(file);
-          if (result.success) {
-            fileUrls.push(result);
-          } else {
-            throw new Error(`Failed to upload file: ${file.name}`);
-          }
-        }
-        
-        // Add file URLs to form data
-        formData.append('attachments', JSON.stringify(fileUrls));
-        
         // Submit form data to Supabase
         const result = await submitFormToSupabase(formData);
         
         if (result.success) {
           showSuccessMessage(formData.get('name'));
           contactForm.reset();
-          document.getElementById('fileList').innerHTML = '';
         } else {
           throw new Error(result.error);
         }
@@ -380,13 +285,20 @@ function showSuccessMessage(name) {
   // Scroll to the success message
   successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
   
-  // Remove the success message after 5 seconds
+  // Animate the success message
+  import('./animations.js').then(({ animateSuccessMessage }) => {
+    animateSuccessMessage(successMessage);
+  });
+  
+  // Remove the success message after 5 seconds with fade out animation
   setTimeout(() => {
-    successMessage.style.opacity = '0';
-    successMessage.style.transition = 'opacity 0.5s';
-    setTimeout(() => {
-      successMessage.remove();
-    }, 500);
+    anime({
+      targets: successMessage,
+      opacity: 0,
+      duration: 500,
+      easing: 'easeOutExpo',
+      complete: () => successMessage.remove()
+    });
   }, 5000);
 }
 
@@ -413,125 +325,3 @@ themeToggle.addEventListener('click', () => {
   localStorage.setItem('theme', newTheme);
   themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
 });
-
-function initFileUpload() {
-  const uploadArea = document.getElementById('uploadArea');
-  const fileInput = document.getElementById('attachments');
-  const fileList = document.getElementById('fileList');
-  
-  if (!uploadArea || !fileInput || !fileList) return;
-
-  // Handle drag and drop events
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, preventDefaults, false);
-  });
-
-  function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  ['dragenter', 'dragover'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, highlight, false);
-  });
-
-  ['dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, unhighlight, false);
-  });
-
-  function highlight() {
-    uploadArea.classList.add('dragover');
-  }
-
-  function unhighlight() {
-    uploadArea.classList.remove('dragover');
-  }
-
-  // Handle dropped files
-  uploadArea.addEventListener('drop', handleDrop, false);
-
-  function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFiles(files);
-  }
-
-  // Handle file input change
-  fileInput.addEventListener('change', function() {
-    handleFiles(this.files);
-  });
-
-  function handleFiles(files) {
-    const validFiles = validateFiles(Array.from(files));
-    if (validFiles.length > 0) {
-      updateFileList(validFiles);
-    }
-  }
-
-  function validateFiles(files) {
-    const maxFileSize = 10 * 1024 * 1024; // 10MB
-    const validTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    
-    return files.filter(file => {
-      if (!validTypes.includes(file.type)) {
-        alert(`File type not allowed: ${file.name}`);
-        return false;
-      }
-      if (file.size > maxFileSize) {
-        alert(`File too large: ${file.name}`);
-        return false;
-      }
-      return true;
-    });
-  }
-
-  function updateFileList(files) {
-    fileList.innerHTML = '';
-    files.forEach(file => {
-      const fileItem = createFileItem(file);
-      fileList.appendChild(fileItem);
-    });
-  }
-
-  function createFileItem(file) {
-    const fileItem = document.createElement('div');
-    fileItem.className = 'file-item';
-    
-    const icon = getFileIcon(file.type);
-    const size = formatFileSize(file.size);
-    
-    fileItem.innerHTML = `
-      <span class="file-item-icon">${icon}</span>
-      <span class="file-item-name">${file.name}</span>
-      <span class="file-item-size">${size}</span>
-      <button type="button" class="file-item-remove">×</button>
-    `;
-    
-    fileItem.querySelector('.file-item-remove').addEventListener('click', () => {
-      fileItem.remove();
-      updateFileInput();
-    });
-    
-    return fileItem;
-  }
-
-  function getFileIcon(type) {
-    if (type.includes('image')) return '🖼️';
-    if (type.includes('pdf')) return '📄';
-    if (type.includes('word')) return '📝';
-    return '📎';
-  }
-
-  function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }
-
-  function updateFileInput() {
-    // This function would be called if we need to sync the file list with the input
-    // For now, we'll let the FormData handle the files directly
-  }
-}
