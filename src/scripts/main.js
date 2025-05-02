@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   initMobileMenu();
-
+  
   // Initialize animations
   import('./animations.js').then(({ initAnimations }) => {
     initAnimations();

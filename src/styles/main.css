@@ -2,9 +2,9 @@
 
 /* ======== Base Styles ======== */
 :root {
-  --primary-color: #8B5CF6;
-  --secondary-color: #7E69AB;
-  --accent-color: #F97316;
+  --primary-color: #2E7D32;
+  --secondary-color: #388E3C;
+  --accent-color: #43A047;
   --dark-color: #1A1F2C;
   --light-color: #F6F6F7;
   --white: #FFFFFF;
@@ -17,9 +17,9 @@
 
 /* Dark mode variables */
 [data-theme="dark"] {
-  --primary-color: #A78BFA;
-  --secondary-color: #8B5CF6;
-  --accent-color: #FB923C;
+  --primary-color: #4CAF50;
+  --secondary-color: #66BB6A;
+  --accent-color: #81C784;
   --dark-color: #F6F6F7;
   --light-color: #1A1F2C;
   --white: #2D3748;
@@ -904,23 +904,7 @@ img {
 }
 
 .form-group input[type="file"] {
-  padding: 10px;
-  border: 2px dashed var(--light-gray);
-  border-radius: var(--border-radius);
-  width: 100%;
-  cursor: pointer;
-  background-color: var(--light-color);
-}
-
-.form-group input[type="file"]:hover {
-  border-color: var(--primary-color);
-}
-
-.file-info {
-  display: block;
-  margin-top: 5px;
-  font-size: 0.85rem;
-  color: var(--gray);
+  display: none;
 }
 
 .submit-group {
@@ -928,12 +912,7 @@ img {
 }
 
 [data-theme="dark"] .form-group input[type="file"] {
-  background-color: var(--white);
-  border-color: var(--gray);
-}
-
-[data-theme="dark"] .form-group input[type="file"]:hover {
-  border-color: var(--primary-color);
+  display: none;
 }
 
 .map-section {
